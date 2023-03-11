@@ -1,47 +1,77 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.IO;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 
 namespace MarkShame
 {
-    public class MarkParser
+    public static class MarkParser
     {
-        private readonly string targetName;
-
-        public MarkParser(string targetName)
+        public static async Task<List<Encounter>> Parse(string filePath)
         {
-            this.targetName = targetName;
-        }
-
-        public List<Tuple<string, string>> ParseFile(string filePath)
-        {
-            List<Tuple<string, string>> players = new List<Tuple<string, string>>();
-            using (System.IO.StreamReader file = new System.IO.StreamReader(filePath))
+            var encounters = new List<Encounter>();
+            using (var reader = new StreamReader(filePath))
             {
                 string line;
-                while ((line = file.ReadLine()) != null)
+                while ((line = await reader.ReadLineAsync()) != null)
                 {
-                    if (ParseLine(line, out string sourceName))
+                    var parts = line.Split(',');
+
+                    string[] eventParts = line.Split(',');
+                    string[] timestampParts = eventParts[0].Split(' ');
+                    var timestamp = timestampParts[0] + " " + timestampParts[1];
+                    var eventType = timestampParts[3];
+                    if (parts.Length < 2)
                     {
-                        players.Add(Tuple.Create(sourceName, targetName));
+                        continue;
+                    }
+
+                    switch (eventType)
+                    {
+                        case "ENCOUNTER_START":
+                            if(Encounter.TryParse(line, out var encounter))
+                                encounters.Add(encounter);
+                            break;
+                        case "SPELL_CAST_SUCCESS":
+                            if (parts.Length > 10)
+                            {
+                                var spellName = parts[10];
+                                var dathSpell = parts[11];
+                                bool isdath = dathSpell == "\"Conductive Mark\"";
+                                if (spellName == "\"Conductive Mark\"" || isdath)
+                                {
+                                    var lastEncounter = encounters.LastOrDefault();
+                                    if (lastEncounter != null)
+                                    {
+                                        if (SpellCastSuccessLineParser.TryParse(line, isdath, out var castSuccess))
+                                        {
+                                            castSuccess.Deaths++;
+                                            lastEncounter.SpellCastSuccessLines.Add(castSuccess);
+                                        }
+                                    }
+                                }
+                            }
+
+                            break;
+                        case "ENCOUNTER_END":
+                            var currentEncounter = encounters.LastOrDefault();
+                            if (currentEncounter != null)
+                            {
+                                currentEncounter = null;
+                            }
+                            break;
+                        case "UNIT_DIED":
+                            var currentDeathEncounter = encounters.LastOrDefault();
+                            if (currentDeathEncounter != null)
+                            {
+                                currentDeathEncounter.Deaths++;
+                            }
+                            break;
                     }
                 }
             }
-            return players;
-        }
 
-        private bool ParseLine(string line, out string sourceName)
-        {
-            sourceName = null;
-            if (line.Contains("SPELL_CAST_SUCCESS") && line.Contains("Conductive Mark") && line.Contains(targetName))
-            {
-                string[] fields = line.Split(',');
-                sourceName = fields[6].Trim('"');
-                return true;
-            }
-            return false;
+            return encounters;
         }
     }
 }

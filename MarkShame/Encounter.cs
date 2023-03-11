@@ -14,15 +14,45 @@ namespace MarkShame
         public int Deaths { get; set; }
         public string EncounterName { get; set; }
 
-        public Encounter(string eventString)
+        public Encounter(string timestamp, string eventType, string encounterName)
         {
-            string[] eventParts = eventString.Split(',');
-            string[] timestampParts = eventParts[0].Split(' ');
-            Timestamp = timestampParts[0] + " " + timestampParts[1];
-            EventType = timestampParts[3];
-            EncounterName = eventParts[2];
+            Timestamp = timestamp;
+            EventType = eventType;
+            EncounterName = encounterName;
             SpellCastSuccessLines = new List<SpellCastSuccessLine>();
-
         }
+
+        public static bool TryParse(string eventString, out Encounter encounter)
+        {
+            encounter = null;
+            try
+            {
+                string[] eventParts = eventString.Split(',');
+                if (eventParts.Length < 3)
+                {
+                    return false;
+                }
+
+                string[] timestampParts = eventParts[0].Split(' ');
+                if (timestampParts.Length < 4)
+                {
+                    return false;
+                }
+
+                var eventType = timestampParts[3];
+                var timestamp = timestampParts[0] + " " + timestampParts[1];
+                var encounterName = eventParts[2];
+
+                encounter = new Encounter(timestamp, eventType, encounterName);
+
+                return true;
+            }
+            catch (IndexOutOfRangeException)
+            {
+                return false;
+            }
+        }
+
     }
+
 }

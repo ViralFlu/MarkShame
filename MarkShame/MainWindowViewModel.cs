@@ -5,13 +5,16 @@ using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 using System.Windows.Input;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Win32;
+// MVVM Toolkit
+using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MarkShame
 {
-    public class MainWindowViewModel : INotifyPropertyChanged
+    public class MainWindowViewModel : ObservableObject
     {
         private string _filePath;
         public string FilePath
@@ -40,29 +43,23 @@ namespace MarkShame
             get { return !IsProcessing; }
         }
 
-        private ObservableCollection<Encounter> _logEntries;
         private bool _isProcessing;
-
-        public ObservableCollection<Encounter> Encounters
-        {
-            get { return _logEntries; }
-            set
-            {
-                _logEntries = value;
-                OnPropertyChanged(nameof(Encounters));
-            }
-        }
 
         public AsyncRelayCommand ParseFileCommand { get; }
         public RelayCommand BrowseCommand { get; }
 
+        public OverallDataGridViewModel DataGrid { get; }
+        public OverallBarChartViewModel BarChart { get; set; }
+
         public MainWindowViewModel()
         {
-            Encounters = new ObservableCollection<Encounter>();
 
             ParseFileCommand = new AsyncRelayCommand(
                 ParseFile,
                 CanParseFile);
+            DataGrid = new 
+                OverallDataGridViewModel();
+            BarChart = new OverallBarChartViewModel();
             BrowseCommand = new RelayCommand(OnBrowse, CanBrowse);
         }
 
@@ -80,16 +77,9 @@ namespace MarkShame
         {
             IsProcessing = true;
             // Parse the log file using the specified file path
-            var entries = await LogParser.Parse(FilePath);
-
-            // Update the LogEntries property with the parsed entries
-            Encounters.Clear();
-            foreach (var entry in entries)
-            {
-                if(entry.SpellCastSuccessLines.Any())
-                    Encounters.Add(entry);
-            }
-
+            var entries = await Task.Run(()=>MarkParser.Parse(FilePath));
+            DataGrid.UpdateEncounters(entries);
+            BarChart.UpdateChart(entries.SelectMany(x=>x.SpellCastSuccessLines).ToList());
             IsProcessing = false;
         }
 
@@ -105,13 +95,6 @@ namespace MarkShame
             }
 
             ParseFileCommand.NotifyCanExecuteChanged();
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-
-        protected void OnPropertyChanged(string propertyName)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
         }
     }
 

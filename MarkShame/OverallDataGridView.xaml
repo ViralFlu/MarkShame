@@ -1,0 +1,29 @@
+﻿<UserControl x:Class="MarkShame.OverallDataGridView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:MarkShame"
+             mc:Ignorable="d" 
+             d:DesignHeight="450" d:DesignWidth="800">
+
+    <DataGrid x:Name="EncounterDataGrid" ItemsSource="{Binding Encounters}" AutoGenerateColumns="False">
+        <DataGrid.Columns>
+            <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" IsReadOnly="True"/>
+            <DataGridTextColumn Header="Encounter Name" Binding="{Binding EncounterName}" IsReadOnly="True"/>
+        </DataGrid.Columns>
+        <DataGrid.RowDetailsTemplate>
+            <DataTemplate>
+                <DataGrid ItemsSource="{Binding SpellCastSuccessLines}" AutoGenerateColumns="False">
+                    <DataGrid.Columns>
+                        <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp}" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Spell Name" Binding="{Binding SpellName}" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Caster Name" Binding="{Binding CasterInfo}" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Target Name" Binding="{Binding TargetInfo}" IsReadOnly="True"/>
+                        <DataGridTextColumn Header="Death Count" Binding="{Binding Deaths}" IsReadOnly="True"/>
+                    </DataGrid.Columns>
+                </DataGrid>
+            </DataTemplate>
+        </DataGrid.RowDetailsTemplate>
+    </DataGrid>
+</UserControl>
