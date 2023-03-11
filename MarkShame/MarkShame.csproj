@@ -5,6 +5,8 @@
     <TargetFramework>net7.0-windows</TargetFramework>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
+    <Copyright>2023</Copyright>
+    <PackageProjectUrl>https://github.com/ViralFlu/MarkShame.git</PackageProjectUrl>
   </PropertyGroup>
 
   <ItemGroup>
